@@ -1,30 +1,19 @@
 package com.acertainbookstore.server;
 
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Set;
+import com.acertainbookstore.business.*;
+import com.acertainbookstore.interfaces.BookStoreSerializer;
+import com.acertainbookstore.utils.*;
+import com.esotericsoftware.kryo.io.Input;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-
-import com.acertainbookstore.business.BookCopy;
-import com.acertainbookstore.business.BookEditorPick;
-import com.acertainbookstore.business.CertainBookStore;
-import com.acertainbookstore.business.StockBook;
-import com.acertainbookstore.utils.BookStoreKryoSerializer;
-import com.acertainbookstore.interfaces.BookStoreSerializer;
-import com.acertainbookstore.utils.BookStoreXStreamSerializer;
-import com.acertainbookstore.utils.BookStoreConstants;
-import com.acertainbookstore.utils.BookStoreException;
-import com.acertainbookstore.utils.BookStoreMessageTag;
-import com.acertainbookstore.utils.BookStoreResponse;
-import com.acertainbookstore.utils.BookStoreUtility;
-import com.esotericsoftware.kryo.io.Input;
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 /**
  * {@link BookStoreHTTPMessageHandler} implements the message handler class
@@ -128,6 +117,18 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 
 			case GETSTOCKBOOKSBYISBN:
 				getStockBooksByISBN(request, response);
+				break;
+
+			case RATEBOOKS:
+				rateBooks(request, response);
+				break;
+
+			case GETTOPRATEDBOOKS:
+				getTopRatedBooks(request, response);
+				break;
+
+			case GETBOOKSINDEMAND:
+				getBooksInDemand(request, response);
 				break;
 
 			default:
@@ -384,6 +385,86 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 
 		try {
 			myBookStore.removeBooks(bookSet);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Rate books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void rateBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		byte[] serializedRequestContent = getSerializedRequestContent(request);
+
+		Set<BookRating> bookRating = (Set<BookRating>) serializer.get().deserialize(serializedRequestContent);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			myBookStore.rateBooks(bookRating);
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Gets the top rated books.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	private void getTopRatedBooks(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		String numBooksString = URLDecoder.decode(request.getParameter(BookStoreConstants.BOOK_NUM_PARAM), StandardCharsets.UTF_8);
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			int numBooks = BookStoreUtility.convertStringToInt(numBooksString);
+			bookStoreResponse.setList(myBookStore.getTopRatedBooks(numBooks));
+		} catch (BookStoreException ex) {
+			bookStoreResponse.setException(ex);
+		}
+
+		byte[] serializedResponseContent = serializer.get().serialize(bookStoreResponse);
+		response.getOutputStream().write(serializedResponseContent);
+	}
+
+	/**
+	 * Gets the books in demand.
+	 *
+	 * @param request
+	 *            the request
+	 * @param response
+	 *            the response
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	@SuppressWarnings("unchecked")
+	private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		// TODO: Check this from documentation
+		//byte[] serializedRequestContent = getSerializedRequestContent(request);
+		//Set<Integer> isbnSet = (Set<Integer>) serializer.get().deserialize(serializedRequestContent);
+
+		BookStoreResponse bookStoreResponse = new BookStoreResponse();
+
+		try {
+			bookStoreResponse.setList(myBookStore.getBooksInDemand());
 		} catch (BookStoreException ex) {
 			bookStoreResponse.setException(ex);
 		}
