@@ -6,17 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.acertainbookstore.business.*;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.acertainbookstore.business.Book;
-import com.acertainbookstore.business.BookCopy;
-import com.acertainbookstore.business.CertainBookStore;
-import com.acertainbookstore.business.ImmutableStockBook;
-import com.acertainbookstore.business.StockBook;
 import com.acertainbookstore.client.BookStoreHTTPProxy;
 import com.acertainbookstore.client.StockManagerHTTPProxy;
 import com.acertainbookstore.interfaces.BookStore;
@@ -33,7 +29,9 @@ public class BookStoreTest {
 
 	/** The Constant TEST_ISBN. */
 	private static final int TEST_ISBN = 3044560;
-
+	private static final int TEST_ISBN1 = 3044561;
+	private static final int TEST_ISBN2 = 3044562;
+	private static final int TEST_ISBN3 = 3044563;
 	/** The Constant NUM_COPIES. */
 	private static final int NUM_COPIES = 5;
 
@@ -349,6 +347,186 @@ public class BookStoreTest {
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
 
+	@Test
+	public void testCorrectRate() throws BookStoreException {
+
+		Set<BookRating> booksToRate = new HashSet<BookRating>();
+		BookRating book = new BookRating(TEST_ISBN, 3);
+		booksToRate.add(book);
+
+		client.rateBooks(booksToRate);
+		List<StockBook> listBooks = storeManager.getBooks();
+		StockBook bookInList = listBooks.get(0);
+
+		assertTrue(bookInList.getISBN() == TEST_ISBN && bookInList.getTotalRating()==3 && bookInList.getNumTimesRated()==1);
+
+		booksToRate.clear();
+		book.setRating(1);
+		booksToRate.add(book);
+
+		client.rateBooks(booksToRate);
+		listBooks = storeManager.getBooks();
+		bookInList = listBooks.get(0);
+		assertTrue(bookInList.getISBN() == TEST_ISBN && bookInList.getTotalRating()==4 && bookInList.getNumTimesRated()==2);
+
+	}
+
+	@Test
+	public void testNullList() throws BookStoreException{
+		Set<BookRating> booksToRate = null;
+		try {
+			client.rateBooks(booksToRate);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+	}
+
+	@Test
+	public void testInvalidRate()throws BookStoreException{
+		Set<BookRating> booksToRate = new HashSet<BookRating>();
+		booksToRate.add(new BookRating(TEST_ISBN, 6));
+		try {
+			client.rateBooks(booksToRate);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		booksToRate.add(new BookRating(TEST_ISBN, -1));
+		try {
+			client.rateBooks(booksToRate);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+	}
+
+
+	@Test
+	public void testgetTopRatedEqualRate() throws BookStoreException {
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 1, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 2, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 3,
+				false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 4, "Test of Thrones", "George RR Testin'", (float) 10, NUM_COPIES, 0, 0,
+				3, false));
+
+		storeManager.addBooks(booksToAdd);
+		List<Book> topRatedBooks = client.getTopRatedBooks(1);
+		Book book = topRatedBooks.get(0);
+		assertTrue(book.getISBN()==TEST_ISBN + 3);
+	}
+
+
+	@Test
+	public void testgetTopRated1() throws BookStoreException {
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 3,
+				false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 4, "Test of Thrones", "George RR Testin'", (float) 10, NUM_COPIES, 0, 0,
+				3, false));
+
+		storeManager.addBooks(booksToAdd);
+		List<Book> topRatedBooks = client.getTopRatedBooks(2);
+		Book book = topRatedBooks.get(0);
+		assertTrue(book.getISBN()==TEST_ISBN + 3);
+		book = topRatedBooks.get(1);
+		assertTrue(book.getISBN()==TEST_ISBN + 4);
+
+	}
+	@Test
+	public void testGetTopRated2() throws BookStoreException {
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 1, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 2, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 3, "Harry Potter and JUnit", "JK Unit", (float) 10, NUM_COPIES, 0, 0, 3,
+				false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 4, "Test of Thrones", "George RR Testin'", (float) 10, NUM_COPIES, 0, 0,
+				4, false));
+
+		storeManager.addBooks(booksToAdd);
+		List<Book> topRatedBooks = client.getTopRatedBooks(5);
+		Book book = topRatedBooks.get(0);
+		assertTrue(book.getISBN()==TEST_ISBN +4);
+		book = topRatedBooks.get(1);
+		assertTrue(book.getISBN()==TEST_ISBN + 3);
+		book = topRatedBooks.get(2);
+		assertTrue(book.getISBN()==TEST_ISBN + 2);
+		book = topRatedBooks.get(3);
+		assertTrue(book.getISBN()==TEST_ISBN + 1);
+		book = topRatedBooks.get(4);
+		assertTrue(book.getISBN()==TEST_ISBN);
+
+	}
+
+	@Test
+	public void testgetTopRatedEmpty() throws BookStoreException {
+		List<Book> topRatedBooks = client.getTopRatedBooks(0);
+		assertTrue(topRatedBooks.isEmpty());
+	}
+
+	@Test
+	public void testNegativeNumBooks() throws BookStoreException {
+		try {
+			client.getTopRatedBooks(-1);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+	}
+
+	@Test
+	public  void testBooksInDemand() throws BookStoreException {
+
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 1, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 2, false));
+		storeManager.addBooks(booksToAdd);
+
+		// Try to buy more copies than there are in store.
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES + 1));
+		booksToBuy.add(new BookCopy(TEST_ISBN+1, NUM_COPIES + 2));
+		booksToBuy.add(new BookCopy(TEST_ISBN+2, NUM_COPIES));
+
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInDemand = storeManager.getBooksInDemand();
+		assertTrue(booksInDemand.size()==2);
+		assertTrue(booksInDemand.get(0).getISBN()==TEST_ISBN);
+		assertTrue(booksInDemand.get(1).getISBN()==TEST_ISBN+1);
+
+	}
+
+
+
+	@Test
+	public  void testBooksInDemandEmpty() throws BookStoreException {
+
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES));
+		client.buyBooks(booksToBuy);
+		List<StockBook> booksInDemand = storeManager.getBooksInDemand();
+		assertTrue(booksInDemand.isEmpty());
+
+	}
 	/**
 	 * Tear down after class.
 	 *

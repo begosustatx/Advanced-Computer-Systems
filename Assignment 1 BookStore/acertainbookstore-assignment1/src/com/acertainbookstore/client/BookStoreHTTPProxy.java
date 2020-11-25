@@ -157,6 +157,7 @@ public class BookStoreHTTPProxy implements BookStore {
 		String urlString = serverAddress + "/" + BookStoreMessageTag.RATEBOOKS;
 		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, bookRating);
 		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+
 	}
 
 	/*

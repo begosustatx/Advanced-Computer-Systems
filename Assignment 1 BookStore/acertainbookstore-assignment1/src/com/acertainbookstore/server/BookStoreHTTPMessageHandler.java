@@ -20,7 +20,7 @@ import java.util.Set;
  * which is invoked to handle messages received by the
  * {@link BookStoreHTTPServerUtility}. It decodes the HTTP message and invokes
  * the {@link CertainBookStore} server API.
- * 
+ *
  * @see AbstractHandler
  * @see BookStoreHTTPServerUtility
  * @see CertainBookStore
@@ -52,7 +52,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.jetty.server.Handler#handle(java.lang.String,
 	 * org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest,
 	 * javax.servlet.http.HttpServletResponse)
@@ -79,61 +79,61 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 			System.err.println("No message tag.");
 		} else {
 			switch (messageTag) {
-			case REMOVEBOOKS:
-				removeBooks(request, response);
-				break;
+				case REMOVEBOOKS:
+					removeBooks(request, response);
+					break;
 
-			case REMOVEALLBOOKS:
-				removeAllBooks(response);
-				break;
+				case REMOVEALLBOOKS:
+					removeAllBooks(response);
+					break;
 
-			case ADDBOOKS:
-				addBooks(request, response);
-				break;
+				case ADDBOOKS:
+					addBooks(request, response);
+					break;
 
-			case ADDCOPIES:
-				addCopies(request, response);
-				break;
+				case ADDCOPIES:
+					addCopies(request, response);
+					break;
 
-			case LISTBOOKS:
-				listBooks(response);
-				break;
+				case LISTBOOKS:
+					listBooks(response);
+					break;
 
-			case UPDATEEDITORPICKS:
-				updateEditorPicks(request, response);
-				break;
+				case UPDATEEDITORPICKS:
+					updateEditorPicks(request, response);
+					break;
 
-			case BUYBOOKS:
-				buyBooks(request, response);
-				break;
+				case BUYBOOKS:
+					buyBooks(request, response);
+					break;
 
-			case GETBOOKS:
-				getBooks(request, response);
-				break;
+				case GETBOOKS:
+					getBooks(request, response);
+					break;
 
-			case GETEDITORPICKS:
-				getEditorPicks(request, response);
-				break;
+				case GETEDITORPICKS:
+					getEditorPicks(request, response);
+					break;
 
-			case GETSTOCKBOOKSBYISBN:
-				getStockBooksByISBN(request, response);
-				break;
+				case GETSTOCKBOOKSBYISBN:
+					getStockBooksByISBN(request, response);
+					break;
 
-			case RATEBOOKS:
-				rateBooks(request, response);
-				break;
+				case RATEBOOKS:
+					rateBooks(request, response);
+					break;
 
-			case GETTOPRATEDBOOKS:
-				getTopRatedBooks(request, response);
-				break;
+				case GETTOPRATEDBOOKS:
+					getTopRatedBooks(request, response);
+					break;
 
-			case GETBOOKSINDEMAND:
-				getBooksInDemand(request, response);
-				break;
+				case GETBOOKSINDEMAND:
+					getBooksInDemand(request, response);
+					break;
 
-			default:
-				System.err.println("Unsupported message tag.");
-				break;
+				default:
+					System.err.println("Unsupported message tag.");
+					break;
 			}
 		}
 
