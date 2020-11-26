@@ -361,9 +361,7 @@ public class CertainBookStore implements BookStore, StockManager {
 	 */
 	@Override
 	public synchronized List<StockBook> getBooksInDemand() throws BookStoreException {
-
-		// TODO: See what to do with exception
-		//throw new BookStoreException();
+		//throw new BookStoreException(); no exception needed
 		Collection<BookStoreBook> bookMapValues = bookMap.values();
 
 		return bookMapValues.stream().filter(BookStoreBook::hadSaleMiss)

@@ -457,7 +457,7 @@ public class BookStoreHTTPMessageHandler extends AbstractHandler {
 	 */
 	@SuppressWarnings("unchecked")
 	private void getBooksInDemand(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		// TODO: Check this from documentation
+		// based on suggestion for inspiration from getBooks, but no need of it
 		//byte[] serializedRequestContent = getSerializedRequestContent(request);
 		//Set<Integer> isbnSet = (Set<Integer>) serializer.get().deserialize(serializedRequestContent);
 

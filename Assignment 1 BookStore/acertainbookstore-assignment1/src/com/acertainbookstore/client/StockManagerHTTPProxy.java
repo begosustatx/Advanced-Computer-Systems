@@ -3,6 +3,7 @@ package com.acertainbookstore.client;
 import java.util.List;
 import java.util.Set;
 
+import com.acertainbookstore.business.CertainBookStore;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
@@ -148,7 +149,12 @@ public class StockManagerHTTPProxy implements StockManager {
 	 */
 	@Override
 	public List<StockBook> getBooksInDemand() throws BookStoreException {
-		throw new BookStoreException("Not implemented");
+		String urlString = serverAddress + "/" + BookStoreMessageTag.GETBOOKSINDEMAND;
+		BookStoreRequest bookStoreRequest = BookStoreRequest.newPostRequest(urlString, "");
+		BookStoreUtility.performHttpExchange(client, bookStoreRequest, serializer.get());
+		BookStoreResponse bookStoreResponse = BookStoreUtility.performHttpExchange(client, bookStoreRequest,
+				serializer.get());
+		return (List<StockBook>) bookStoreResponse.getList();
 	}
 
 	/*
