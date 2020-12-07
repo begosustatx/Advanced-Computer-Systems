@@ -31,6 +31,7 @@ import com.acertainbookstore.utils.BookStoreUtility;
  */
 public class BookStoreHTTPProxy implements BookStore {
 
+
 	/** The client. */
 	protected HttpClient client;
 

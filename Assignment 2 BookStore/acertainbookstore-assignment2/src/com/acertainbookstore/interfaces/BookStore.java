@@ -67,4 +67,5 @@ public interface BookStore {
 	 *             the book store exception
 	 */
 	public List<Book> getEditorPicks(int numBooks) throws BookStoreException;
+
 }

@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jetty.client.TimeoutCompleteListener;
+import org.eclipse.jetty.io.ssl.ALPNProcessor;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -51,9 +53,80 @@ public class BookStoreTest {
 	/** The client. */
 	private static BookStore client;
 
+	/** The error for test2 **/
+	private static boolean error = false;
+
 	/**
 	 * Sets the up before class.
 	 */
+
+
+	static class T1 implements Runnable{
+		HashSet<BookCopy> books ;
+		public T1(HashSet<BookCopy> booksToBuy) {
+			books = booksToBuy;
+		}
+
+		@Override
+		public void run() {
+			try {
+				client.buyBooks(books);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static class T2 implements Runnable{
+		HashSet<BookCopy> books;
+		public T2(HashSet<BookCopy> booksToBuy) {
+			books = booksToBuy;
+		}
+
+		@Override
+		public void run() {
+			try {
+				storeManager.addCopies(books);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static class T3 implements Runnable{
+		HashSet<BookCopy> books;
+		public T3(HashSet<BookCopy> booksToBuy) {
+			books = booksToBuy;
+		}
+
+		@Override
+		public void run() {
+			try {
+				client.buyBooks(books);
+				storeManager.addCopies(books);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static class T4 implements Runnable{
+
+		@Override
+		public void run() {
+			try {
+				List<StockBook> booksOnStock = storeManager.getBooks();
+				int numBooks = booksOnStock.get(0).getNumCopies();
+				for (int i = 0; i<booksOnStock.size();i++){
+					if(numBooks!=booksOnStock.get(i).getNumCopies())
+						error = true;
+				}
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 	@BeforeClass
 	public static void setUpBeforeClass() {
 		try {
@@ -361,6 +434,58 @@ public class BookStoreTest {
 		List<StockBook> booksInStorePostTest = storeManager.getBooks();
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
+	}
+	@Test
+	public void singleTest1() throws BookStoreException, InterruptedException {
+
+		storeManager.removeAllBooks();
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+		storeManager.addBooks(booksToAdd);
+
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
+
+		Thread t1 = new Thread( new T1(booksToBuy));
+		Thread t2 = new Thread( new T2(booksToBuy));
+
+		t1.start();
+		t2.start();
+
+		t1.join();
+		t2.join();
+
+		List<StockBook> booksOnStock = storeManager.getBooks();
+
+		int i = 0;
+		for(StockBook book:booksToAdd){
+			assertTrue(booksOnStock.get(i).getISBN() ==book.getISBN());
+			assertTrue(booksOnStock.get(i).getNumCopies() ==book.getNumCopies());
+		}
+
+	}
+
+	@Test
+	public void singleTest2() throws BookStoreException, InterruptedException {
+		storeManager.removeAllBooks();
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+		storeManager.addBooks(booksToAdd);
+
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
+
+		Thread t3 = new Thread( new T3(booksToBuy));
+		Thread t4 = new Thread( new T4());
+
+		t3.start();
+		t4.start();
+
+		t3.join();
+		t4.join();
+
+		assertFalse(error);
 	}
 
 	/**
