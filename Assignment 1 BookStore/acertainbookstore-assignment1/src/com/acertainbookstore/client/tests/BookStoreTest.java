@@ -419,7 +419,8 @@ public class BookStoreTest {
 		storeManager.addBooks(booksToAdd);
 		List<Book> topRatedBooks = client.getTopRatedBooks(1);
 		Book book = topRatedBooks.get(0);
-		assertTrue(book.getISBN()==TEST_ISBN + 1);
+		System.out.println(topRatedBooks.get(0).getISBN());
+		assertTrue(book.getISBN()==TEST_ISBN + 4);
 	}
 
 
@@ -435,7 +436,7 @@ public class BookStoreTest {
 		storeManager.addBooks(booksToAdd);
 		List<Book> topRatedBooks = client.getTopRatedBooks(2);
 		Book book = topRatedBooks.get(0);
-		assertTrue(book.getISBN()==TEST_ISBN );
+		assertTrue(book.getISBN()==TEST_ISBN +4);
 		book = topRatedBooks.get(1);
 		assertTrue(book.getISBN()==TEST_ISBN + 3);
 
@@ -456,18 +457,16 @@ public class BookStoreTest {
 		storeManager.addBooks(booksToAdd);
 		List<Book> topRatedBooks = client.getTopRatedBooks(5);
 		Book book = topRatedBooks.get(0);
-		assertTrue(book.getISBN()==TEST_ISBN +1);
+		assertTrue(book.getISBN()==TEST_ISBN +4);
 		book = topRatedBooks.get(1);
-		assertTrue(book.getISBN()==TEST_ISBN );
+		assertTrue(book.getISBN()==TEST_ISBN +2);
 		book = topRatedBooks.get(2);
 		assertTrue(book.getISBN()==TEST_ISBN + 3);
 		book = topRatedBooks.get(3);
-		assertTrue(book.getISBN()==TEST_ISBN + 2);
+		assertTrue(book.getISBN()==TEST_ISBN );
 		book = topRatedBooks.get(4);
-		assertTrue(book.getISBN()==TEST_ISBN + 4);
-
+		assertTrue(book.getISBN()==TEST_ISBN + 1);
 	}
-
 	@Test
 	public void testgetTopRatedEmpty() throws BookStoreException {
 		List<Book> topRatedBooks = client.getTopRatedBooks(0);

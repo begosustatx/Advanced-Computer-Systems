@@ -325,34 +325,11 @@ public class CertainBookStore implements BookStore, StockManager {
 			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
 		}
 
-		List<Book> topRatedBooks = new ArrayList<>(numBooks);
-		BookStoreBook max;
-		Map<Integer, BookStoreBook> books = bookMap;
-
-		for (int i = 0; i < numBooks; i++){
-			max=null;
-			for (Entry<Integer, BookStoreBook> book : books.entrySet()) {
-				if (max == null) {
-					max = book.getValue();
-				}
-				else if (book.getValue().getTotalRating() > max.getAverageRating() || book.getValue().getTotalRating() == max.getTotalRating()) {
-					max = book.getValue();
-				}
-			}
-			topRatedBooks.add(i, max);
-			books.remove(max.getISBN());
-		}
-
-		return  topRatedBooks;
-
-		//PROBLEM WHEN THERE ARE MORE THAN 1 WHEN THE SAME RATING
-		/*
 		return bookMap.values().stream()
 				.sorted(Comparator.comparing(BookStoreBook::getAverageRating).reversed())
 				.map(BookStoreBook::immutableBook)
 				.limit(numBooks).collect(Collectors.toList());
 
-		 */
 	}
 
 	/*
