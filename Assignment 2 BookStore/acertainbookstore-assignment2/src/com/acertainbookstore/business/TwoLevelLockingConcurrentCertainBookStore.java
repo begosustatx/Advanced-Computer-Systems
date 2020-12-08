@@ -33,7 +33,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
 
 	/**
-	 * Instantiates a new {@link CertainBookStore}.
+	 * Instantiates a new { CertainBookStore}.
 	 */
 	public TwoLevelLockingConcurrentCertainBookStore() {
 		// Constructors are not synchronized
@@ -107,7 +107,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		if (bookSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
 		}
-		intentionLock.writeLock().lock();
+		lock.writeLock().lock();
 		try{
 
 			// Check if all are there
@@ -117,13 +117,11 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 			for (StockBook book : bookSet) {
 				int isbn = book.getISBN();
-				lock.writeLock().lock();
 				bookMap.put(isbn, new BookStoreBook(book));
-				lock.writeLock().unlock();
 			}
 		}
 		finally {
-			intentionLock.writeLock().unlock();
+			lock.writeLock().unlock();
 
 		}
 
@@ -175,7 +173,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 	 */
 	public List<StockBook> getBooks() {
 		Collection<BookStoreBook> bookMapValues = bookMap.values();
-		intentionLock.readLock().lock();
+		lock.readLock().lock();
 		try{
 			//READ LOCK HERE?
 			return bookMapValues.stream()
@@ -183,7 +181,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 					.collect(Collectors.toList());
 		}
 		finally {
-			intentionLock.readLock().unlock();
+			lock.readLock().unlock();
 		}
 
 	}
@@ -248,10 +246,8 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				if (!book.areCopiesInStore(bookCopyToBuy.getNumCopies())) {
 					// If we cannot sell the copies of the book, it is a miss.
-					lock.writeLock().lock();
 					salesMisses.put(isbn, bookCopyToBuy.getNumCopies() - book.getNumCopies());
 					saleMiss = true;
-					lock.writeLock().unlock();
 				}
 			}
 
@@ -260,9 +256,8 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			if (saleMiss) {
 				for (Map.Entry<Integer, Integer> saleMissEntry : salesMisses.entrySet()) {
 					book = bookMap.get(saleMissEntry.getKey());
-					lock.writeLock().lock();
 					book.addSaleMiss(saleMissEntry.getValue());
-					lock.writeLock().unlock();
+
 				}
 				throw new BookStoreException(BookStoreConstants.BOOK + BookStoreConstants.NOT_AVAILABLE);
 			}
@@ -373,7 +368,9 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 				while (tobePicked.size() < numBooks) {
 					randNum = rand.nextInt(rangePicks);
+					lock.readLock().lock();
 					tobePicked.add(randNum);
+					lock.readLock().unlock();
 				}
 			}
 
