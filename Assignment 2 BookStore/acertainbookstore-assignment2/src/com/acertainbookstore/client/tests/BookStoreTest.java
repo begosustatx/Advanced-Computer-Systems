@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.acertainbookstore.business.*;
 import org.eclipse.jetty.client.TimeoutCompleteListener;
 import org.eclipse.jetty.io.ssl.ALPNProcessor;
 import org.junit.After;
@@ -14,12 +15,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.acertainbookstore.business.Book;
-import com.acertainbookstore.business.BookCopy;
-import com.acertainbookstore.business.SingleLockConcurrentCertainBookStore;
-import com.acertainbookstore.business.ImmutableStockBook;
-import com.acertainbookstore.business.StockBook;
-import com.acertainbookstore.business.TwoLevelLockingConcurrentCertainBookStore;
 import com.acertainbookstore.client.BookStoreHTTPProxy;
 import com.acertainbookstore.client.StockManagerHTTPProxy;
 import com.acertainbookstore.interfaces.BookStore;
@@ -122,6 +117,53 @@ public class BookStoreTest {
 						//Think about throwing an error
 						error = true;
 				}
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static class T5 implements Runnable{
+		HashSet<StockBook> books;
+		public T5(HashSet<StockBook> booksToAdd) {
+			books = booksToAdd;
+		}
+
+		@Override
+		public void run() {
+			try {
+				storeManager.addBooks(books);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	static class T6 implements Runnable{
+		HashSet<BookCopy> books;
+		public T6(HashSet<BookCopy> copyBooks) {
+			books = copyBooks;
+		}
+
+		@Override
+		public void run() {
+			try {
+				storeManager.addCopies(books);
+			} catch (BookStoreException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	static class T7 implements Runnable{
+		Set<Integer> isbns;
+		public T7(Set<Integer> booksToRemove) {
+			isbns = booksToRemove;
+		}
+
+		@Override
+		public void run() {
+			try {
+				storeManager.removeBooks(isbns);
 			} catch (BookStoreException e) {
 				e.printStackTrace();
 			}
@@ -491,6 +533,58 @@ public class BookStoreTest {
 		assertFalse(error);
 	}
 
+	//Add a book and and copy to that book
+	@Test
+	public void test3() throws BookStoreException, InterruptedException {
+		storeManager.removeAllBooks();
+
+		HashSet<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+
+		HashSet<BookCopy> copyBooks = new HashSet<BookCopy>();
+		copyBooks.add(new BookCopy(TEST_ISBN, 1));
+
+		Thread t5 = new Thread( new T5(booksToAdd));
+		Thread t6 = new Thread( new T6 (copyBooks));
+
+		t5.start();
+		t6.start();
+
+		t5.join();
+		t6.join();
+
+		List<StockBook> booksOnStock = storeManager.getBooks();
+		assertTrue(booksOnStock.get(0).getISBN() ==TEST_ISBN );
+		assertTrue(booksOnStock.get(0).getNumCopies() ==NUM_COPIES+1);
+
+	}
+
+	//Add a book and a copy to that book and delete it
+	@Test
+	public void test4() throws BookStoreException, InterruptedException {
+
+		storeManager.removeAllBooks();
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(getDefaultBook());
+		storeManager.addBooks(booksToAdd);
+
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
+		Set<Integer> isbns = new HashSet<>();
+		isbns.add(TEST_ISBN);
+
+		Thread t2 = new Thread(new T2(booksToBuy));
+		Thread t7 = new Thread(new T7(isbns));
+
+		t2.start();
+		t7.start();
+
+		t2.join();
+		t7.join();
+		List<StockBook> booksOnStock = storeManager.getBooks();
+		assertTrue(booksOnStock.isEmpty() );
+
+	}
 	/**
 	 * Tear down after class.
 	 *
