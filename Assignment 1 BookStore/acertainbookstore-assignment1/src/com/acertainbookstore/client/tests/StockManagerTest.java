@@ -475,6 +475,36 @@ public class StockManagerTest {
 		assertTrue(booksInStoreList.size() == 0);
 	}
 
+	@Test
+	public  void testBooksInDemand() throws BookStoreException {
+
+
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 1, "The Art of Computer Programming", "Donald Knuth",
+				(float) 300, NUM_COPIES, 0, 0, 1, false));
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN + 2, "The C Programming Language",
+				"Dennis Ritchie and Brian Kerninghan", (float) 50, NUM_COPIES, 0, 0, 2, false));
+		storeManager.addBooks(booksToAdd);
+
+		// Try to buy more copies than there are in store.
+		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
+		booksToBuy.add(new BookCopy(TEST_ISBN, NUM_COPIES + 1));
+		booksToBuy.add(new BookCopy(TEST_ISBN+1, NUM_COPIES + 2));
+		booksToBuy.add(new BookCopy(TEST_ISBN+2, NUM_COPIES));
+
+		try {
+			client.buyBooks(booksToBuy);
+			fail();
+		} catch (BookStoreException ex) {
+			;
+		}
+
+		List<StockBook> booksInDemand = storeManager.getBooksInDemand();
+		assertTrue(booksInDemand.size()==2);
+		assertTrue(booksInDemand.get(1).getISBN()==TEST_ISBN);
+		assertTrue(booksInDemand.get(0).getISBN()==TEST_ISBN+1);
+
+	}
 	/**
 	 * Tear down after class.
 	 *
