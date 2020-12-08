@@ -16,6 +16,8 @@ Advanced Computer Systems Course Codes for Assignments, MSc in Computer Science 
 <br/>
 
 ### Contact Begoña 📲 📭  
+[![Gmail Badge](https://img.shields.io/badge/-bego.sustatxa1.d@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:bego.sustatxa1.d@gmail.com)](mailto:bego.sustatxa1.d@gmail.com)
+[![Kunet Badge](https://img.shields.io/badge/-frh503@alumni.ku.dk-c14438?style=flat-square&logo=KUNet!&color=brown&logoColor=white&link=mailto:frh503@alumni.ku.dk)](mailto:frh503@alumni.ku.dk)
 
 
 <br/>
