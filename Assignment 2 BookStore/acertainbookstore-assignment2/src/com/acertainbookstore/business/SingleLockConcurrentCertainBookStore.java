@@ -32,7 +32,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
 
 	/**
-	 * Instantiates a new {@link CertainBookStore}.
+	 * Instantiates a new {CertainBookStore}.
 	 */
 	public SingleLockConcurrentCertainBookStore() {
 		// Constructors are not synchronized
@@ -122,6 +122,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 		}
 		finally {
 			lock.writeLock().unlock();
+
 		}
 
 	}
@@ -214,7 +215,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see com.acertainbookstore.interfaces.BookStore#buyBooks(java.util.Set)
+	 * @see com.acertainbookstore.interfaces.BookStore#lockBooks(java.util.Set)
 	 */
 	public void buyBooks(Set<BookCopy> bookCopiesToBuy) throws BookStoreException {
 		if (bookCopiesToBuy == null) {
@@ -406,6 +407,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 * 
 	 * @see com.acertainbookstore.interfaces.StockManager#removeAllBooks()
 	 */
+
 	public void removeAllBooks() throws BookStoreException {
 		bookMap.clear();
 	}
@@ -420,7 +422,6 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 		if (isbnSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
 		}
-		lock.writeLock().lock();
 		lock.writeLock().lock();
 		try{
 			for (Integer ISBN : isbnSet) {

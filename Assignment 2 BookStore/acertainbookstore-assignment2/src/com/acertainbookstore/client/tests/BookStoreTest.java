@@ -44,7 +44,7 @@ public class BookStoreTest {
 	private static boolean localTest = true;
 
 	/** Single lock test */
-	private static boolean singleLock = true;
+	private static boolean singleLock = false;
 
 	
 	/** The store manager. */
@@ -119,6 +119,7 @@ public class BookStoreTest {
 				int numBooks = booksOnStock.get(0).getNumCopies();
 				for (int i = 0; i<booksOnStock.size();i++){
 					if(numBooks!=booksOnStock.get(i).getNumCopies())
+						//Think about throwing an error
 						error = true;
 				}
 			} catch (BookStoreException e) {
@@ -436,12 +437,13 @@ public class BookStoreTest {
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
 	@Test
-	public void singleTest1() throws BookStoreException, InterruptedException {
+	public void test1() throws BookStoreException, InterruptedException {
 
 		storeManager.removeAllBooks();
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
 		booksToAdd.add(getDefaultBook());
 		storeManager.addBooks(booksToAdd);
+
 
 		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
 		booksToBuy.add(new BookCopy(TEST_ISBN, 1));
@@ -455,6 +457,7 @@ public class BookStoreTest {
 		t1.join();
 		t2.join();
 
+
 		List<StockBook> booksOnStock = storeManager.getBooks();
 
 		int i = 0;
@@ -466,7 +469,7 @@ public class BookStoreTest {
 	}
 
 	@Test
-	public void singleTest2() throws BookStoreException, InterruptedException {
+	public void test2() throws BookStoreException, InterruptedException {
 		storeManager.removeAllBooks();
 
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
