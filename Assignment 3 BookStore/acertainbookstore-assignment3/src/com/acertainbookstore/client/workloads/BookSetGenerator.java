@@ -33,7 +33,9 @@ public class BookSetGenerator {
 		 * input set at random using a uniform distribution. This function is used in the
 		 * customer interaction to select books to be bought.
 		 * */
-
+		if (num>isbns.size()) {
+			return isbns;
+		}
 		Random rand = new Random();
 		Set<Integer> result = new HashSet<>();
 		Integer[] isbnsArray = isbns.toArray(new Integer[isbns.size()]);

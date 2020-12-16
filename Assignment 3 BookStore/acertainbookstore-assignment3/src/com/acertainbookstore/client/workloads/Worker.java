@@ -112,18 +112,16 @@ public class Worker implements Callable<WorkerRunResult> {
 		 * It then checks if the set of ISBNs is in the list of books fetched. Finally, it invokes
 		 * addBooks with the set of books not found in the list returned by getBooks.
 		 */
-		int nextSetOfStockBooks = 10;
+		int nextSetOfStockBooks = new Random().nextInt(configuration.getNumActualRuns()); // NOT SURE
 
-		CertainBookStore client = new CertainBookStore();
-		List<StockBook> stockBookList = client.getBooks();
-		BookSetGenerator generator = new BookSetGenerator();
-		Set<StockBook> books = generator.nextSetOfStockBooks(nextSetOfStockBooks);
+		List<StockBook> stockBookList = configuration.getStockManager().getBooks();
+		Set<StockBook> books = configuration.getBookSetGenerator().nextSetOfStockBooks(nextSetOfStockBooks);
 		Set<StockBook> newBooks = new HashSet<>();
 		for (StockBook stockBook: books) {
 			if (stockBookList.stream().noneMatch(book -> book.getISBN() == stockBook.getISBN()))
 				newBooks.add(stockBook);
 		}
-		client.addBooks(newBooks);
+		configuration.getStockManager().addBooks(newBooks);
     }
 
     /**
@@ -133,26 +131,18 @@ public class Worker implements Callable<WorkerRunResult> {
      */
     private void runFrequentStockManagerInteraction() throws BookStoreException {
 	// TODO: Add code for Stock Replenishment Interaction
-		// TODO(MARKO wrote): check numbBooks, subsetBooks, how many copies to buy
+		// TODO(MARKO wrote): check k value, how many copies - from config
 		/**
-		 * invokes getEditorPicks. It then selects a
-		 * subset of the books returned by calling sampleFromSetOfISBNs, and buys the books
-		 * selected by calling buyBooks.
+		 * invokes getBooks, selects the k books
+		 * with smallest quantities in stock, and then invokes addCopies on these books.
 		 */
-		int numbBooks = 5;
-		int subsetBooks = numbBooks/2;
-		int numbCopies = 1;
-
-		CertainBookStore client = new CertainBookStore();
-		List<Book> editorPicksBookList = client.getEditorPicks(numbBooks);
-		BookSetGenerator generator = new BookSetGenerator();
-		Set<Integer> isbns = editorPicksBookList.stream().map(Book::getISBN).collect(Collectors.toSet());
-		Set<Integer> pickedIsbns = generator.sampleFromSetOfISBNs(isbns, subsetBooks);
-		Set<BookCopy> buyBooks = new HashSet<>();
-		for (int pickedIsbn: pickedIsbns) {
-			buyBooks.add(new BookCopy(pickedIsbn, numbCopies));
+		List<StockBook> stockBookList = configuration.getStockManager().getBooks();
+		stockBookList.sort(Comparator.comparing(StockBook::getNumCopies));
+		Set<BookCopy> newBookCopies = new HashSet<>();
+		for (int i = 0; i < stockBookList.size() && i<configuration.getNumBooksWithLeastCopies(); i++) {
+			newBookCopies.add(new BookCopy(stockBookList.get(i).getISBN(), configuration.getNumAddCopies()));
 		}
-		client.buyBooks(buyBooks);
+		configuration.getStockManager().addCopies(newBookCopies);
     }
 
     /**
@@ -162,21 +152,23 @@ public class Worker implements Callable<WorkerRunResult> {
      */
     private void runFrequentBookStoreInteraction() throws BookStoreException {
 	// TODO: Add code for Customer Interaction
-		// TODO(MARKO wrote): check k value, how many copies
+		// TODO(MARKO wrote): check numbBooks, subsetBooks, how many copies to buy - from config
 		/**
-		 * invokes getBooks, selects the k books
-		 * with smallest quantities in stock, and then invokes addCopies on these books.
+		 * invokes getEditorPicks. It then selects a
+		 * subset of the books returned by calling sampleFromSetOfISBNs, and buys the books
+		 * selected by calling buyBooks.
 		 */
-		int k = 10;
-		int numCopies = 1;
-		CertainBookStore client = new CertainBookStore();
-		List<StockBook> stockBookList = client.getBooks();
-		stockBookList.sort(Comparator.comparing(StockBook::getNumCopies));
-		Set<BookCopy> newBookCopies = new HashSet<>();
-		for (int i = 0; i < stockBookList.size() && i<k; i++) {
-			newBookCopies.add(new BookCopy(stockBookList.get(i).getISBN(), numCopies));
+
+		int subsetBooks = new Random().nextInt(configuration.getNumEditorPicksToGet());
+
+		List<Book> editorPicksBookList = configuration.getBookStore().getEditorPicks(configuration.getNumEditorPicksToGet());
+		Set<Integer> isbns = editorPicksBookList.stream().map(Book::getISBN).collect(Collectors.toSet());
+		Set<Integer> pickedIsbns = configuration.getBookSetGenerator().sampleFromSetOfISBNs(isbns, subsetBooks);
+		Set<BookCopy> buyBooks = new HashSet<>();
+		for (int pickedIsbn: pickedIsbns) {
+			buyBooks.add(new BookCopy(pickedIsbn, configuration.getNumBooksToBuy()));
 		}
-		client.addCopies(newBookCopies);
+		configuration.getBookStore().buyBooks(buyBooks);
     }
 
 }
