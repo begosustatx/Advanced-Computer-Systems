@@ -92,6 +92,18 @@ public class CertainWorkload {
 	 */
 	public static void reportMetric(List<WorkerRunResult> workerRunResults) {
 		// TODO: You should aggregate metrics and output them for plotting here
+		// throughput - is the aggregate throughput of successful customer interactions for all workers
+		// sum(w in workers) (number of successful customer interactions(w) / total time taken in actual runs(w))
+		// latency - is the average latency of these interactions across all workers
+		// TODO(MARKO wrote): recheck formulas, should we plot from java or how?
+		double throughput = 0;
+		double latency = 0;
+		for (WorkerRunResult workerRunResult: workerRunResults) {
+			throughput += workerRunResult.getSuccessfulInteractions() / workerRunResult.getElapsedTimeInNanoSecs();
+			latency += workerRunResult.getSuccessfulInteractions()/workerRunResults.size();
+		}
+		System.out.println("Throughput: " + throughput);
+		System.out.println("Latency: " + latency);
 	}
 
 	/**
@@ -104,6 +116,6 @@ public class CertainWorkload {
 			StockManager stockManager) throws BookStoreException {
 
 		// TODO: You should initialize data for your bookstore here
-
+		// TODO(MARKO wrote): all random or with some value, should we call this initializeBookStoreData
 	}
 }
