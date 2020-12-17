@@ -94,13 +94,19 @@ public class CertainWorkload {
 		List<Double> throughput = new ArrayList<>();
 		List<Double> latency = new ArrayList<>();
 		for (WorkerRunResult workerRunResult: workerRunResults) {
-			System.out.println(workerRunResult.getTotalFrequentBookStoreInteractionRuns() + " " + workerRunResult.getSuccessfulInteractions() + " " + (workerRunResult.getElapsedTimeInNanoSecs() / 3600) + "s");
-			System.out.println(workerRunResult.getSuccessfulFrequentBookStoreInteractionRuns() + " " + workerRunResults.size());
+			//System.out.println(workerRunResult.getTotalFrequentBookStoreInteractionRuns() + " " + workerRunResult.getSuccessfulInteractions() + " " + (workerRunResult.getElapsedTimeInNanoSecs() / 3600) + "s");
+			//System.out.println(workerRunResult.getSuccessfulFrequentBookStoreInteractionRuns() + " " + workerRunResults.size());
 			throughput.add(workerRunResult.getSuccessfulInteractions() / (workerRunResult.getElapsedTimeInNanoSecs() / 3600.0));
 			latency.add(workerRunResult.getSuccessfulFrequentBookStoreInteractionRuns()/(workerRunResults.size()*1.0));
 		}
+		System.out.println("++++++++++++++++++++++++++++++++++");
+		System.out.println("Workers " +  workerRunResults.size());
 		System.out.println("Throughput: " + throughput);
+		System.out.println(throughput.stream().reduce(0.0, Double::sum)/(workerRunResults.size()*1.0));
 		System.out.println("Latency: " + latency);
+		System.out.println(latency.stream().reduce(0.0, Double::sum)/(workerRunResults.size()*1.0));
+		System.out.println("++++++++++++++++++++++++++++++++++");
+
 	}
 
 	/**
@@ -111,9 +117,6 @@ public class CertainWorkload {
 	 */
 	public static void initializeBookStoreData(BookStore bookStore,
 			StockManager stockManager) throws BookStoreException {
-
-		// TODO: You should initialize data for your bookstore here
-		// TODO(MARKO wrote): all random or with some value, should we call this initializeBookStoreData
 		BookSetGenerator generator = new BookSetGenerator();
 		stockManager.addBooks(generator.nextSetOfStockBooks(100000));
 	}
