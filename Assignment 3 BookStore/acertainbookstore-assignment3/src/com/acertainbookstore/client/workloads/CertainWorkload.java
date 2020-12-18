@@ -115,6 +115,7 @@ public class CertainWorkload {
 			totalSuccessInteratcions += workerRunResult.getSuccessfulInteractions();
 
 		}
+		double avgLatency = latency/workerRunResults.size();
 		double percentageCustomerInteractions = (totalCustomerInteractions/ totalNumOfInteractions) * 100.0;
 		double goodput = (totalSuccessInteratcions/ totalNumOfInteractions) * 100.0;
 		System.out.println("++++++++++++++++++++++++++++++++++");
@@ -123,6 +124,7 @@ public class CertainWorkload {
 		System.out.println("GoodPut: " + goodput);
 		System.out.println("Throughput: " + throughput);
 		System.out.println("Latency: " + latency);
+		System.out.println("Avg Latency: " + avgLatency);
 		System.out.println("++++++++++++++++++++++++++++++++++");
 		try(FileWriter fw = new FileWriter("Throughput.txt", true);
 			BufferedWriter bw = new BufferedWriter(fw);
@@ -136,7 +138,7 @@ public class CertainWorkload {
 			BufferedWriter bw = new BufferedWriter(fw);
 			PrintWriter out = new PrintWriter(bw))
 		{
-			out.print(latency+",");
+			out.print(avgLatency+",");
 		} catch (IOException e) {
 			//exception handling left as an exercise for the reader
 		}
