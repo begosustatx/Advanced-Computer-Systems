@@ -52,23 +52,22 @@ public class BookSetGenerator {
 	public Set<StockBook> nextSetOfStockBooks(int num) {
 
 		Set<StockBook> stockBooksSet = new HashSet<>();
-		for (int i = 0; i < num; i++) {
+		while (stockBooksSet.size() < num) {
 			stockBooksSet.add(generateImmutableStockBook());
 		}
 		return stockBooksSet;
 	}
 
 	private ImmutableStockBook generateImmutableStockBook() {
-		// TODO(MARKO wrote): generate more sense in data, const numbers :D
 		Random random = new Random();
-		return new ImmutableStockBook(random.nextInt(40)+1,
-				                      randomNameGenerator(random.nextInt(100)+1),
-				                      randomNameGenerator(random.nextInt(100)+1),
-				                 random.nextFloat()*random.nextInt(40),
-				                      random.nextInt(40)+1,
-				                      random.nextInt(40),
-                      		     	  random.nextInt(10),
-				             random.nextLong()*random.nextInt(5),
+		return new ImmutableStockBook(random.nextInt(Integer.MAX_VALUE)+1,
+				                      randomNameGenerator(random.nextInt(50)+1),
+				                      randomNameGenerator(random.nextInt(50)+1),
+				                 random.nextFloat()*random.nextInt(50),
+				                      random.nextInt(50)+1,
+				                      random.nextInt(50),
+                      		     	  random.nextInt(50),
+				             random.nextLong()*random.nextInt(50),
 				                      random.nextBoolean());
 	}
 
