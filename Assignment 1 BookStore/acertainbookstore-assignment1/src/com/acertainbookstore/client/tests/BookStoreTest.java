@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.acertainbookstore.business.*;
 import org.junit.After;
@@ -402,7 +403,31 @@ public class BookStoreTest {
 		}
 	}
 
+	@Test
+	public void testAllNothingRate()throws BookStoreException{
+		storeManager.removeAllBooks();
+		addBooks(TEST_ISBN, 10);
+		addBooks(TEST_ISBN1, 10);
+		addBooks(TEST_ISBN2, 10);
+		addBooks(TEST_ISBN3, 10);
+		List<Float> ratings = storeManager.getBooks().stream().map(StockBook::getAverageRating).collect(Collectors.toList());
+		assertEquals("Store Book has 4 books",4, storeManager.getBooks().size());
+		Set<BookRating> booksToRate = new HashSet<BookRating>();
 
+		booksToRate.add(new BookRating(TEST_ISBN1, 5));
+		booksToRate.add(new BookRating(TEST_ISBN2, 3));
+		booksToRate.add(new BookRating(TEST_ISBN3, 2));
+		booksToRate.add(new BookRating(TEST_ISBN, -1));
+		try {
+			client.rateBooks(booksToRate);
+			fail();
+		} catch (BookStoreException ex) {
+			List<Float> updateRatings = storeManager.getBooks().stream().map(StockBook::getAverageRating).collect(Collectors.toList());
+			for (int i = 0; i < ratings.size(); i++) {
+				assertEquals("Check if no rating was updated, default is -1", updateRatings.get(i), ratings.get(i));
+			}
+		}
+	}
 	@Test
 	public void testgetTopRatedEqualRate() throws BookStoreException {
 

@@ -316,8 +316,6 @@ public class CertainBookStore implements BookStore, StockManager {
 	 * 
 	 * @see com.acertainbookstore.interfaces.BookStore#getTopRatedBooks(int)
 	 */
-
-	// TODO:the function should return instances of com.acertainbookstore.business.ImmutableBook
 	@Override
 	public synchronized List<Book> getTopRatedBooks(int numBooks) throws BookStoreException {
 
@@ -359,6 +357,9 @@ public class CertainBookStore implements BookStore, StockManager {
 		for (BookRating bookRate : bookRating) {
 			// Validate the book, check if is in stock and if the rating is valid, and add the rating.
 			validate(bookRate);
+		}
+		for (BookRating bookRate : bookRating) {
+			// Rate book by updating total ranking and number of timed ranked
 			bookMap.get(bookRate.getISBN()).addRating(bookRate.getRating());
 		}
 	}
