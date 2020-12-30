@@ -2,6 +2,7 @@ package com.acertainbookstore.client.tests;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,23 +52,32 @@ public class BookStoreTest {
 	/** The error for test2 **/
 	private static boolean error = false;
 
+	private static boolean thread = false;
+
 	/**
 	 * Sets the up before class.
 	 */
 
 
+
+
 	static class T1 implements Runnable{
 		HashSet<BookCopy> books ;
+
 		public T1(HashSet<BookCopy> booksToBuy) {
 			books = booksToBuy;
 		}
 
 		@Override
 		public void run() {
-			try {
-				client.buyBooks(books);
-			} catch (BookStoreException e) {
-				e.printStackTrace();
+			for(int i = 0; i<10000; i++){
+				try {
+					client.buyBooks(books);
+				} catch (BookStoreException e) {
+					e.printStackTrace();
+					error = true;
+					break;
+				}
 			}
 		}
 	}
@@ -80,10 +90,12 @@ public class BookStoreTest {
 
 		@Override
 		public void run() {
-			try {
-				storeManager.addCopies(books);
-			} catch (BookStoreException e) {
-				e.printStackTrace();
+			for(int i = 0; i<10000; i++) {
+				try {
+					storeManager.addCopies(books);
+				} catch (BookStoreException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -96,11 +108,23 @@ public class BookStoreTest {
 
 		@Override
 		public void run() {
-			try {
-				client.buyBooks(books);
-				storeManager.addCopies(books);
-			} catch (BookStoreException e) {
-				e.printStackTrace();
+			while(!thread) {
+				try {
+					client.buyBooks(books);
+				} catch (BookStoreException e) {
+					e.printStackTrace();
+					error = true;
+					break;
+				}
+
+				try {
+					storeManager.addCopies(books);
+
+				} catch (BookStoreException e) {
+					e.printStackTrace();
+					error = true;
+					break;
+				}
 			}
 		}
 	}
@@ -109,19 +133,34 @@ public class BookStoreTest {
 
 		@Override
 		public void run() {
-			try {
-				List<StockBook> booksOnStock = storeManager.getBooks();
-				int numBooks = booksOnStock.get(0).getNumCopies();
-				for (int i = 0; i<booksOnStock.size();i++){
-					if(numBooks!=booksOnStock.get(i).getNumCopies())
-						//Think about throwing an error
-						error = true;
+			for(int i = 0; i<10000; i++) {
+				List<StockBook> booksOnStock = null;
+				try {
+					booksOnStock = storeManager.getBooks();
 				}
-			} catch (BookStoreException e) {
-				e.printStackTrace();
+				catch (BookStoreException e) {
+					e.printStackTrace();
+					error = true;
+					thread = true;
+					break;
+				}
+				List<Integer> numCopies = new ArrayList<>();
+				int numBooks = booksOnStock.get(0).getNumCopies();
+					for (StockBook book : booksOnStock) {
+						if (numBooks != book.getNumCopies()) {
+							//Think about throwing an error
+							error = true;
+							thread = true;
+							break;
+						}
+						numCopies.add(book.getNumCopies());
+
+					}
+				}
+			thread = true;
 			}
 		}
-	}
+
 
 	static class T5 implements Runnable{
 		HashSet<StockBook> books;

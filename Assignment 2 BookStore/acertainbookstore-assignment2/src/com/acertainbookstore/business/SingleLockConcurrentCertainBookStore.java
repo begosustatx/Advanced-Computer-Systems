@@ -331,7 +331,8 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 		if (numBooks < 0) {
 			throw new BookStoreException("numBooks = " + numBooks + ", but it must be positive");
 		}
-
+		lock.readLock().lock();
+		try{
 		List<BookStoreBook> listAllEditorPicks = bookMap.entrySet().stream()
                 .map(pair -> pair.getValue())
 				.filter(book -> book.isEditorPick())
@@ -342,8 +343,7 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 		Set<Integer> tobePicked = new HashSet<>();
 		int rangePicks = listAllEditorPicks.size();
 
-		lock.readLock().lock();
-		try{
+
 			if (rangePicks <= numBooks) {
 
 				// We need to add all books.
@@ -409,7 +409,13 @@ public class SingleLockConcurrentCertainBookStore implements BookStore, StockMan
 	 */
 
 	public void removeAllBooks() throws BookStoreException {
-		bookMap.clear();
+		lock.writeLock().lock();
+		try {
+			bookMap.clear();
+		}
+		finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	/*
