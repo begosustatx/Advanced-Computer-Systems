@@ -8,13 +8,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.acertainbookstore.business.*;
-import org.eclipse.jetty.client.TimeoutCompleteListener;
-import org.eclipse.jetty.io.ssl.ALPNProcessor;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import org.junit.*;
 
 import com.acertainbookstore.client.BookStoreHTTPProxy;
 import com.acertainbookstore.client.StockManagerHTTPProxy;
@@ -42,6 +37,8 @@ public class BookStoreTest {
 	/** Single lock test */
 	private static boolean singleLock = false;
 
+	/** Number of iteration of operations in concurrency threads **/
+	private static final int iterations = 1000;
 	
 	/** The store manager. */
 	private static StockManager storeManager;
@@ -52,7 +49,11 @@ public class BookStoreTest {
 	/** The error for test2 **/
 	private static boolean error = false;
 
+	/** The error for test3 **/
 	private static boolean thread = false;
+
+	/** The error for test3 **/
+	private static int editorsPicks = 0;
 
 	/**
 	 * Sets the up before class.
@@ -62,7 +63,7 @@ public class BookStoreTest {
 
 
 	static class T1 implements Runnable{
-		HashSet<BookCopy> books ;
+		HashSet<BookCopy> books;
 
 		public T1(HashSet<BookCopy> booksToBuy) {
 			books = booksToBuy;
@@ -70,9 +71,10 @@ public class BookStoreTest {
 
 		@Override
 		public void run() {
-			for(int i = 0; i<10000; i++){
+			for(int i = 0; i<iterations; i++){
 				try {
 					client.buyBooks(books);
+					System.out.println("BUY: "+i);
 				} catch (BookStoreException e) {
 					e.printStackTrace();
 					error = true;
@@ -90,11 +92,14 @@ public class BookStoreTest {
 
 		@Override
 		public void run() {
-			for(int i = 0; i<10000; i++) {
+			for(int i = 0; i<iterations; i++) {
 				try {
 					storeManager.addCopies(books);
+					System.out.println("COPY: "+i);
 				} catch (BookStoreException e) {
 					e.printStackTrace();
+					error = true;
+					break;
 				}
 			}
 		}
@@ -111,6 +116,7 @@ public class BookStoreTest {
 			while(!thread) {
 				try {
 					client.buyBooks(books);
+					System.out.println("BUY");
 				} catch (BookStoreException e) {
 					e.printStackTrace();
 					error = true;
@@ -119,7 +125,7 @@ public class BookStoreTest {
 
 				try {
 					storeManager.addCopies(books);
-
+					System.out.println("ADD");
 				} catch (BookStoreException e) {
 					e.printStackTrace();
 					error = true;
@@ -133,10 +139,11 @@ public class BookStoreTest {
 
 		@Override
 		public void run() {
-			for(int i = 0; i<10000; i++) {
+			for(int i = 0; i<iterations; i++) {
 				List<StockBook> booksOnStock = null;
 				try {
 					booksOnStock = storeManager.getBooks();
+					System.out.println("READ: "+i);
 				}
 				catch (BookStoreException e) {
 					e.printStackTrace();
@@ -163,36 +170,47 @@ public class BookStoreTest {
 
 
 	static class T5 implements Runnable{
-		HashSet<StockBook> books;
-		public T5(HashSet<StockBook> booksToAdd) {
-			books = booksToAdd;
-		}
+		public T5() {}
 
 		@Override
 		public void run() {
-			try {
-				storeManager.addBooks(books);
-			} catch (BookStoreException e) {
-				e.printStackTrace();
+			for (int i = 0; i < iterations; i++){
+				try {
+					client.getEditorPicks(iterations);
+					System.out.println("GET");
+				} catch (BookStoreException e) {
+					e.printStackTrace();
+					error = true;
+					break;
+				}
 			}
 		}
 	}
 
 	static class T6 implements Runnable{
-		HashSet<BookCopy> books;
-		public T6(HashSet<BookCopy> copyBooks) {
-			books = copyBooks;
-		}
-
+		public T6(){}
 		@Override
 		public void run() {
-			try {
-				storeManager.addCopies(books);
-			} catch (BookStoreException e) {
-				e.printStackTrace();
+			for (int i = 0; i < iterations; i++){
+				if(error){
+					break;
+				}
+				Set<BookEditorPick> editorPickBook = new HashSet<>();
+				editorPickBook.add(new BookEditorPick(TEST_ISBN + i, true));
+				try {
+					storeManager.updateEditorPicks(editorPickBook);
+					System.out.println("UPDATE");
+					editorsPicks ++;
+				} catch (BookStoreException e) {
+					e.printStackTrace();
+					error = true;
+					break;
+				}
 			}
 		}
 	}
+
+
 	static class T7 implements Runnable{
 		Set<Integer> isbns;
 		public T7(Set<Integer> booksToRemove) {
@@ -203,6 +221,7 @@ public class BookStoreTest {
 		public void run() {
 			try {
 				storeManager.removeBooks(isbns);
+				System.out.println("REMOVE");
 			} catch (BookStoreException e) {
 				e.printStackTrace();
 			}
@@ -517,12 +536,23 @@ public class BookStoreTest {
 		assertTrue(booksInStorePreTest.containsAll(booksInStorePostTest)
 				&& booksInStorePreTest.size() == booksInStorePostTest.size());
 	}
+
+	/**
+	 * Two clients C1 and C2, running in di  erent threads, each invoke a fixed
+	 * number of operations. C1 calls buyBooks, while C2 calls addCopies on S
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 * @throws InterruptedException
+	 * 			   the thread interrupt exception
+	 */
 	@Test
 	public void test1() throws BookStoreException, InterruptedException {
 
 		storeManager.removeAllBooks();
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
-		booksToAdd.add(getDefaultBook());
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN, "Java Concurrency in Practice", "Brian Goetz",
+				3000f, NUM_COPIES*iterations, 0, 0, 0, false));
 		storeManager.addBooks(booksToAdd);
 
 
@@ -538,7 +568,6 @@ public class BookStoreTest {
 		t1.join();
 		t2.join();
 
-
 		List<StockBook> booksOnStock = storeManager.getBooks();
 
 		int i = 0;
@@ -549,12 +578,23 @@ public class BookStoreTest {
 
 	}
 
+	/**
+	 * Two clients C1 and C2, running in di  erent threads, each invoke a fixed
+	 * number of operations. C1 calls buyBooks then addCopies, while C2 calls getBooks,
+	 * the snapshots returned by getBooks must be consistent.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 * @throws InterruptedException
+	 * 			   the thread interrupt exception
+	 */
 	@Test
 	public void test2() throws BookStoreException, InterruptedException {
 		storeManager.removeAllBooks();
 
 		Set<StockBook> booksToAdd = new HashSet<StockBook>();
-		booksToAdd.add(getDefaultBook());
+		booksToAdd.add(new ImmutableStockBook(TEST_ISBN, "Java Concurrency in Practice", "Brian Goetz",
+				3000f, NUM_COPIES*iterations, 0, 0, 0, false));
 		storeManager.addBooks(booksToAdd);
 
 		HashSet<BookCopy> booksToBuy = new HashSet<BookCopy>();
@@ -572,19 +612,29 @@ public class BookStoreTest {
 		assertFalse(error);
 	}
 
-	//Add a book and and copy to that book
+	/**
+	 * Two clients C1 and C2, running in different threads, each invoke a fixed
+	 * number of operations. C1 calls addBooks then C2 addCopies
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 * @throws InterruptedException
+	 * 			   the thread interrupt exception
+	 */
 	@Test
 	public void test3() throws BookStoreException, InterruptedException {
 		storeManager.removeAllBooks();
 
-		HashSet<StockBook> booksToAdd = new HashSet<StockBook>();
-		booksToAdd.add(getDefaultBook());
+		Set<StockBook> booksToAdd = new HashSet<StockBook>();
+		for (int i = 0; i < iterations; i++){
+			booksToAdd.add(new ImmutableStockBook(TEST_ISBN+i, "Java Concurrency in Practice "+i, "Brian Goetz",
+					3000f, NUM_COPIES, 0, 0, 0, false));
+		}
 
-		HashSet<BookCopy> copyBooks = new HashSet<BookCopy>();
-		copyBooks.add(new BookCopy(TEST_ISBN, 1));
+		storeManager.addBooks(booksToAdd);
 
-		Thread t5 = new Thread( new T5(booksToAdd));
-		Thread t6 = new Thread( new T6 (copyBooks));
+		Thread t5 = new Thread(new T5());
+		Thread t6 = new Thread(new T6());
 
 		t5.start();
 		t6.start();
@@ -592,13 +642,20 @@ public class BookStoreTest {
 		t5.join();
 		t6.join();
 
-		List<StockBook> booksOnStock = storeManager.getBooks();
-		assertTrue(booksOnStock.get(0).getISBN() ==TEST_ISBN );
-		assertTrue(booksOnStock.get(0).getNumCopies() ==NUM_COPIES+1);
+		List<Book> editorPicks = client.getEditorPicks(iterations);
+		assertTrue(!error && editorPicks.size()==iterations);
 
 	}
 
-	//Add a book and a copy to that book and delete it
+	/**
+	 * Two clients C1 and C2, running in different threads, each invoke a fixed
+	 * number of operations. C1 calls addBooks then addCopies, C2 removeBook.
+	 *
+	 * @throws BookStoreException
+	 *             the book store exception
+	 * @throws InterruptedException
+	 * 			   the thread interrupt exception
+	 */
 	@Test
 	public void test4() throws BookStoreException, InterruptedException {
 

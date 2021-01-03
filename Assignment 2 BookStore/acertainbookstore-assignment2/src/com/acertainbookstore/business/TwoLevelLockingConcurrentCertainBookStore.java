@@ -121,15 +121,12 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 				intentionLock.put(isbn, new ReentrantReadWriteLock(true));
 				intentionLock.get(isbn).writeLock().lock();
 				bookMap.put(isbn, new BookStoreBook(book));
-			}
-			for(StockBook book : bookSet){
-				int isbn = book.getISBN();
 				intentionLock.get(isbn).writeLock().unlock();
 			}
 		}
 		finally {
+			intentionLock.clear();
 			lock.writeLock().unlock();
-
 		}
 
 	}
@@ -147,7 +144,6 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		if (bookCopiesSet == null) {
 			throw new BookStoreException(BookStoreConstants.NULL_INPUT);
 		}
-
 		lock.readLock().lock();
 		try{
 			for (BookCopy bookCopy : bookCopiesSet) {
@@ -155,21 +151,19 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			BookStoreBook book;
-
 			// Update the number of copies
 			for (BookCopy bookCopy : bookCopiesSet) {
 				isbn = bookCopy.getISBN();
 				numCopies = bookCopy.getNumCopies();
 				book = bookMap.get(isbn);
+				intentionLock.put(isbn, new ReentrantReadWriteLock(true));
 				intentionLock.get(isbn).readLock().lock();
 				book.addCopies(numCopies);
-			}
-			for(BookCopy bookCopy: bookCopiesSet){
-				isbn = bookCopy.getISBN();
-				intentionLock.get(isbn).readLock().lock();
+				intentionLock.get(isbn).readLock().unlock();
 			}
 		}
 		finally {
+			intentionLock.clear();
 			lock.readLock().unlock();
 		}
 
@@ -184,6 +178,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		lock.readLock().lock();
 		try{
 			for (Entry<Integer, ReentrantReadWriteLock> entry : intentionLock.entrySet()) {
+				intentionLock.put(entry.getKey(), new ReentrantReadWriteLock(true));
 				intentionLock.get(entry.getKey()).readLock().lock();
 			}
 			Collection<BookStoreBook> bookMapValues = bookMap.values();
@@ -195,6 +190,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 					.collect(Collectors.toList());
 		}
 		finally {
+			intentionLock.clear();
 			lock.readLock().unlock();
 		}
 
@@ -214,22 +210,21 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		}
 
 		int isbnValue;
-		lock.readLock().lock();
+		lock.writeLock().lock();
 		try{
 			for (BookEditorPick editorPickArg : editorPicks) {
 				validate(editorPickArg);
 			}
-//Look more into it
 			for (BookEditorPick editorPickArg : editorPicks) {
+				intentionLock.put(editorPickArg.getISBN(), new ReentrantReadWriteLock(true));
 				intentionLock.get(editorPickArg.getISBN()).readLock().lock();
 				bookMap.get(editorPickArg.getISBN()).setEditorPick(editorPickArg.isEditorPick());
-			}
-			for (BookEditorPick editorPickArg : editorPicks){
 				intentionLock.get(editorPickArg.getISBN()).readLock().unlock();
 			}
 		}
 		finally {
-			lock.readLock().unlock();
+			intentionLock.clear();
+			lock.writeLock().unlock();
 		}
 
 	}
@@ -251,7 +246,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 		Map<Integer, Integer> salesMisses = new HashMap<>();
 
-		lock.readLock().lock();
+		lock.writeLock().lock();
 		try{
 			for (BookCopy bookCopyToBuy : bookCopiesToBuy) {
 				isbn = bookCopyToBuy.getISBN();
@@ -280,17 +275,16 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 			// Then make the purchase.
 			for (BookCopy bookCopyToBuy : bookCopiesToBuy) {
+				intentionLock.put(bookCopyToBuy.getISBN(), new ReentrantReadWriteLock(true));
 				intentionLock.get(bookCopyToBuy.getISBN()).readLock().lock();
 				book = bookMap.get(bookCopyToBuy.getISBN());
 				book.buyCopies(bookCopyToBuy.getNumCopies());
-
-			}
-			for (BookCopy bookCopyToBuy : bookCopiesToBuy){
 				intentionLock.get(bookCopyToBuy.getISBN()).readLock().unlock();
 			}
 		}
 		finally {
-			lock.readLock().unlock();
+			intentionLock.clear();
+			lock.writeLock().unlock();
 		}
 
 	}
@@ -313,6 +307,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 				validateISBNInStock(ISBN);
 			}
 			for (Integer ISBN : isbnSet) {
+				intentionLock.put(ISBN, new ReentrantReadWriteLock(true));
 				intentionLock.get(ISBN).readLock().lock();
 			}
 			List<StockBook> books = isbnSet.stream()
@@ -325,6 +320,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			return books;
 		}
 		finally {
+			intentionLock.clear();
 			lock.readLock().unlock();
 		}
 
@@ -346,6 +342,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 				validateISBNInStock(ISBN);
 			}
 			for (Integer ISBN : isbnSet) {
+				intentionLock.put(ISBN, new ReentrantReadWriteLock(true));
 				intentionLock.get(ISBN).readLock().lock();
 			}
 			List<Book> books = isbnSet.stream()
@@ -359,9 +356,9 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 
 		}
 		finally {
+			intentionLock.clear();
 			lock.readLock().unlock();
 		}
-
 
 	}
 
@@ -378,6 +375,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		lock.readLock().lock();
 		try{
 			for (Entry<Integer, ReentrantReadWriteLock> entry : intentionLock.entrySet()) {
+				intentionLock.put(entry.getKey(), new ReentrantReadWriteLock(true));
 				intentionLock.get(entry.getKey()).readLock().lock();
 			}
 			List<BookStoreBook> listAllEditorPicks = bookMap.entrySet().stream()
@@ -417,6 +415,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 					.collect(Collectors.toList());
 		}
 		finally {
+			intentionLock.clear();
 			lock.readLock().unlock();
 		}
 
@@ -462,14 +461,15 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 		lock.writeLock().lock();
 		try {
 			for (Entry<Integer, ReentrantReadWriteLock> entry : intentionLock.entrySet()) {
+				intentionLock.put(entry.getKey(), new ReentrantReadWriteLock(true));
 				intentionLock.get(entry.getKey()).writeLock().lock();
 			}
 			bookMap.clear();
 			for (Entry<Integer, ReentrantReadWriteLock> entry : intentionLock.entrySet()) {
 				intentionLock.get(entry.getKey()).writeLock().unlock();
 			}
-			intentionLock.clear();
 		}finally {
+			intentionLock.clear();
 			lock.writeLock().unlock();
 		}
 	}
@@ -497,6 +497,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 
 			for (int isbn : isbnSet) {
+				intentionLock.put(isbn, new ReentrantReadWriteLock(true));
 				intentionLock.get(isbn).writeLock().lock();
 				bookMap.remove(isbn);
 			}
@@ -507,6 +508,7 @@ public class TwoLevelLockingConcurrentCertainBookStore implements BookStore, Sto
 			}
 		}
 		finally {
+			intentionLock.clear();
 			lock.writeLock().unlock();
 		}
 
