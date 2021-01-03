@@ -614,7 +614,7 @@ public class BookStoreTest {
 
 	/**
 	 * Two clients C1 and C2, running in different threads, each invoke a fixed
-	 * number of operations. C1 calls addBooks then C2 addCopies
+	 * number of operations. C1 calls getEditorPicks then C2 updateEditorPicks
 	 *
 	 * @throws BookStoreException
 	 *             the book store exception
